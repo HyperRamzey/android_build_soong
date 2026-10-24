@@ -28,8 +28,14 @@ TEST_KEY_DIR = "build/make/target/product/security"
 def get_build_variant(product_config):
   if product_config["Eng"]:
     return "eng"
-  else:
-    return "user"
+  # Honor the lunch variant: the product config carries Debuggable
+  # (true for userdebug builds unless PRODUCT_NOT_DEBUGGABLE_IN_USERDEBUG
+  # is set). A userdebug build must ship userdebug properties
+  # (ro.debuggable=1) - the previous hardcoded "user" silently downgraded
+  # every userdebug build and broke adb observability.
+  if product_config.get("Debuggable", False):
+    return "userdebug"
+  return "user"
 
 def get_build_flavor(product_config):
   build_flavor = product_config["DeviceName"] + "-" + get_build_variant(product_config)
